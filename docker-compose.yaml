@@ -1,0 +1,9 @@
+version: "3.4"
+
+services:
+  client-jaeger:
+    image: jaegertracing/all-in-one
+    container_name: client-jaeger
+    ports:
+      - "14268:14268"   # jaeger-collector HTTP server (tracer provider)
+      - "16686:16686"   # HTTP server (browser UI)

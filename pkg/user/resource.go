@@ -21,7 +21,6 @@ func NewUserResource(store *Store) *UsersResource {
 // Routes creates a REST router for the todos resource
 func (rs UsersResource) Routes() chi.Router {
 	r := chi.NewRouter()
-	// r.Use() // some middleware..
 
 	r.Get("/", rs.List)    // GET /users - read a list of users
 	r.Post("/", rs.Create) // POST /users - create a new user and persist it
@@ -44,7 +43,7 @@ func (rs UsersResource) userCtx() func(next http.Handler) http.Handler {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			user := rs.store.Get(userID)
+			user := rs.store.Get(r.Context(), userID)
 			if user.Name == "" {
 				http.Error(w, http.StatusText(404), http.StatusNotFound)
 				return
@@ -56,7 +55,7 @@ func (rs UsersResource) userCtx() func(next http.Handler) http.Handler {
 }
 
 func (rs UsersResource) List(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, rs.store.GetAll())
+	render.JSON(w, r, rs.store.GetAll(r.Context()))
 }
 
 func (rs UsersResource) Create(w http.ResponseWriter, r *http.Request) {
@@ -68,9 +67,8 @@ func (rs UsersResource) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	rs.store.Add(u.Name, u.Email)
-
-	w.Write([]byte("users create"))
+	id := rs.store.Add(r.Context(), u.Name, u.Email)
+	render.JSON(w, r, &id)
 }
 
 func (rs UsersResource) Get(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +88,6 @@ func (rs UsersResource) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(422), http.StatusUnprocessableEntity)
 		return
 	}
-	rs.store.Delete(user.UUID)
+	rs.store.Delete(r.Context(), user.UUID)
 	w.WriteHeader(http.StatusNoContent)
 }

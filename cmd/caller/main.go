@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"log"
 	"math/rand"
 	"net/http"
@@ -12,12 +12,40 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
+	"github.com/uptrace/opentelemetry-go-extra/otelzap"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
+
+	"github.com/robertscherbarth/opentelemetry-go-example/pkg/opentelemetry"
 )
+
+const serviceName = "consumer"
 
 func main() {
 	//precondition to set a random number
 	rand.Seed(time.Now().UnixNano())
-	client := http.DefaultClient
+
+	//init exporter
+	tp := opentelemetry.InitJaegerTracerProvider(serviceName)
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+
+	ctx := context.Background()
+
+	//init client with otel wrapper
+	//client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+	// init tracer object
+
+	// Wrap zap logger to extend Zap with API that accepts a context.Context.
+	log := otelzap.New(zap.NewExample(), otelzap.WithStackTrace(true))
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
@@ -25,30 +53,69 @@ func main() {
 		writer.WriteHeader(http.StatusOK)
 	})
 
+	addressURI := "http://localhost:8081/users"
+
 	//rnd get
-	go func() {
+	go func(context.Context) {
 		ticker := time.NewTicker(time.Duration(generateRndInt()) * time.Second)
 		for {
 			select {
 			case <-ticker.C:
-				addressURI := "http://localhost:8081/users"
-				res, err := client.Get(addressURI)
-				if err != nil {
-					log.Printf("err: %s\n", err.Error())
-					continue
-				}
-				log.Printf("called uri: %s method: GET response_code: %d\n", addressURI, res.StatusCode)
 				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
+
+				err := rndUserList(ctx, addressURI)
+				if err != nil {
+					log.Ctx(ctx).Error("oops something went wrong", zap.Error(err))
+					break
+				}
+				log.InfoContext(ctx, "user get all")
 			}
 		}
-	}()
+	}(ctx)
 
-	//rnd post
+	go func(context.Context) {
+		ticker := time.NewTicker(time.Duration(generateRndInt()) * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
+
+				err := rndUserCreate(ctx, addressURI)
+				if err != nil {
+					log.Ctx(ctx).Error("oops something went wrong", zap.Error(err))
+					break
+				}
+				log.InfoContext(ctx, "user create")
+			}
+		}
+	}(ctx)
+
+	go func(context.Context) {
+		ticker := time.NewTicker(time.Duration(generateRndInt()) * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
+
+				err := rndUserDelete(ctx, addressURI)
+				if err != nil {
+					log.Ctx(ctx).Error("oops something went wrong", zap.Error(err))
+					break
+				}
+				log.InfoContext(ctx, "user delete")
+			}
+		}
+	}(ctx)
+
+	/*//rnd post
 	go func() {
 		ticker := time.NewTicker(time.Duration(generateRndInt()) * time.Second)
 		for {
 			select {
 			case <-ticker.C:
+				client := http.DefaultClient
+				newCtx, span := otel.Tracer("").Start(context.Background(), "post", trace.WithAttributes(semconv.PeerServiceKey.String("caller")))
+
 				addressURI := "http://localhost:8081/users"
 				user := struct {
 					Name  string `json:"name"`
@@ -59,16 +126,19 @@ func main() {
 				}
 				jsonData, err := json.Marshal(&user)
 				if err != nil {
-					log.Printf("err: %s\n", err.Error())
+					log.Ctx(newCtx).Error("oops something went wrong", zap.Error(err))
+					span.End()
 					return
 				}
 				res, err := client.Post(addressURI, "application/json; charset=utf-8", bytes.NewBuffer(jsonData))
 				if err != nil {
-					log.Printf("err: %s\n", err.Error())
+					log.Ctx(newCtx).Error("oops something went wrong", zap.Error(err))
+					span.End()
 					continue
 				}
-				log.Printf("called uri: %s method: POST response_code: %d\n", addressURI, res.StatusCode)
+				log.InfoContext(newCtx, "post", zap.String("uri", addressURI), zap.Int("response_code", res.StatusCode))
 				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
+				span.End()
 			}
 		}
 	}()
@@ -79,10 +149,16 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
+				client := http.DefaultClient
+				newCtx, span := otel.Tracer("").Start(context.Background(), "delete", trace.WithAttributes(semconv.PeerServiceKey.String("caller")))
+
 				addressURI := "http://localhost:8081/users"
-				res, err := client.Get(addressURI)
+				getReq, _ := http.NewRequest(http.MethodGet, addressURI, nil)
+				getReq.WithContext(newCtx)
+				res, err := client.Do(getReq)
 				if err != nil {
-					log.Printf("err: %s\n", err.Error())
+					log.Ctx(newCtx).Error("oops something went wrong", zap.Error(err))
+					span.End()
 					continue
 				}
 				type user struct {
@@ -91,7 +167,8 @@ func main() {
 				users := make([]user, 0)
 				err = json.NewDecoder(res.Body).Decode(&users)
 				if err != nil {
-					log.Printf("err: %s\n", err.Error())
+					log.Ctx(newCtx).Error("oops something went wrong", zap.Error(err))
+					span.End()
 					continue
 				}
 				id := uuid.New().String()
@@ -99,21 +176,24 @@ func main() {
 					id = users[rand.Intn(len(users))].UUID.String()
 				}
 				req, _ := http.NewRequest(http.MethodDelete, addressURI+"/"+id, nil)
+				req.WithContext(newCtx)
 				delRes, err := client.Do(req)
 				if err != nil {
-					log.Printf("err: %s\n", err.Error())
+					log.Ctx(newCtx).Error("oops something went wrong", zap.Error(err))
+					span.End()
 					continue
 				}
 
-				log.Printf("called uri: %s method: DELETE response_code: %d\n", addressURI, delRes.StatusCode)
+				log.InfoContext(newCtx, "delete", zap.String("uri", addressURI), zap.Int("response_code", delRes.StatusCode))
 				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
+				span.End()
 			}
 		}
-	}()
+	}()*/
 
-	log.Println("started caller application")
+	log.Info("started caller application")
 	if err := http.ListenAndServe(":8080", router); err != nil {
-		log.Printf("error while running server (%s)\n", err.Error())
+		log.Error("error while running server", zap.Error(err))
 	}
 }
 
@@ -121,4 +201,138 @@ func generateRndInt() int {
 	max := 5
 	min := 1
 	return rand.Intn(max-min) + min
+}
+
+// HTTPClientTransporter is a convenience function which helps attaching tracing
+// functionality to conventional HTTP clients.
+func HTTPClientTransporter(rt http.RoundTripper) http.RoundTripper {
+	return otelhttp.NewTransport(rt)
+}
+
+func rndUserList(ctx context.Context, addressURI string) error {
+	ctx, span := otel.Tracer("").Start(ctx, "user.list")
+	defer span.End()
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, addressURI, nil)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
+		return err
+	}
+
+	res, err := HTTPClientTransporter(http.DefaultTransport).RoundTrip(req)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
+		return err
+	}
+	span.SetStatus(codes.Ok, res.Status)
+	return nil
+}
+
+func rndUserCreate(ctx context.Context, addressURI string) error {
+	ctx, span := otel.Tracer("").Start(ctx, "user.create")
+	defer span.End()
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	user := struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}{
+		Name:  "test-user-" + fmt.Sprint(rand.Int()),
+		Email: "test-user@example.com",
+	}
+	jsonData, err := json.Marshal(&user)
+	if err != nil {
+		span.RecordError(err)
+		span.End()
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, addressURI, bytes.NewBuffer(jsonData))
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
+		return err
+	}
+
+	res, err := HTTPClientTransporter(http.DefaultTransport).RoundTrip(req)
+	if err != nil {
+		span.RecordError(err)
+		span.End()
+		return err
+	}
+
+	span.SetStatus(codes.Ok, res.Status)
+	span.End()
+
+	return nil
+}
+
+func rndUserDelete(ctx context.Context, addressURI string) error {
+	ctx, span := otel.Tracer("").Start(ctx, "user.delete")
+	defer span.End()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, addressURI, nil)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
+		return err
+	}
+	res, err := HTTPClientTransporter(http.DefaultTransport).RoundTrip(req)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
+
+	type user struct {
+		UUID uuid.UUID `json:"uuid"`
+	}
+	users := make([]user, 0)
+	err = json.NewDecoder(res.Body).Decode(&users)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
+		return err
+	}
+
+	//get random id
+	id := uuid.New().String()
+	if len(users) != 0 {
+		id = users[rand.Intn(len(users))].UUID.String()
+	}
+
+	delReq, err := http.NewRequestWithContext(ctx, http.MethodDelete, addressURI+"/"+id, nil)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
+		return err
+	}
+	delRes, err := HTTPClientTransporter(http.DefaultTransport).RoundTrip(delReq)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "")
+		return err
+	}
+	span.AddEvent("user.delete", trace.WithAttributes(
+		attribute.String("id", id)))
+	span.SetStatus(codes.Ok, delRes.Status)
+	return nil
+
 }
