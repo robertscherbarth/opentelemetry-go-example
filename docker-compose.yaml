@@ -1,9 +1,37 @@
-version: "3.4"
+version: "3.9"
 
 services:
-  client-jaeger:
+  jaeger:
     image: jaegertracing/all-in-one
-    container_name: client-jaeger
+    container_name: jaeger
     ports:
       - "14268:14268"   # jaeger-collector HTTP server (tracer provider)
       - "16686:16686"   # HTTP server (browser UI)
+  user-management:
+    container_name: user-management
+    build:
+      context: "."
+      dockerfile: Dockerfile.user
+    links:
+      - jaeger
+    environment:
+      - "OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces"
+    depends_on:
+      - jaeger
+    ports:
+      - "8081:8081"
+  consumer:
+    container_name: consumer
+    build:
+      context: "."
+      dockerfile: Dockerfile.consumer
+    links:
+      - jaeger
+    environment:
+      - "OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces"
+      - "URL=http://user-management:8081/users"
+    depends_on:
+      - jaeger
+      - user-management
+    ports:
+      - "8080:8080"

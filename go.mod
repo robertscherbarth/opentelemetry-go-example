@@ -20,6 +20,9 @@ require (
 	github.com/go-chi/chi v1.5.4 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/nats-io/nats.go v1.15.0 // indirect
+	github.com/nats-io/nkeys v0.3.0 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/riandyrn/otelchi v0.4.0 // indirect
 	github.com/signalfx/splunk-otel-go v0.8.0 // indirect
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/go-chi/chi/splunkchi v0.8.0 // indirect
@@ -30,5 +33,6 @@ require (
 	go.opentelemetry.io/otel/metric v0.30.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
+	golang.org/x/crypto v0.0.0-20220513210258-46612604a0f9 // indirect
 	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
 )

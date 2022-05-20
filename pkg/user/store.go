@@ -5,6 +5,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
@@ -28,7 +29,7 @@ func (s *Store) Add(ctx context.Context, name, email string) uuid.UUID {
 	s.Lock()
 	defer s.Unlock()
 
-	span.AddEvent("creating a user")
+	span.AddEvent("creating a user", trace.WithTimestamp(time.Now().UTC()))
 
 	uuid := uuid.New()
 	user := User{
@@ -45,7 +46,7 @@ func (s *Store) Add(ctx context.Context, name, email string) uuid.UUID {
 		attribute.String("id", uuid.String()),
 		attribute.String("name", name),
 		attribute.String("email", email),
-	))
+	), trace.WithTimestamp(time.Now().UTC()))
 
 	return uuid
 }
