@@ -1,8 +1,12 @@
 package user
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/robertscherbarth/opentelemetry-go-example/pkg/opentelemetry"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,11 +15,12 @@ import (
 )
 
 type UsersResource struct {
-	store *Store
+	store     *Store
+	analytics string
 }
 
-func NewUserResource(store *Store) *UsersResource {
-	return &UsersResource{store: store}
+func NewUserResource(store *Store, analyticsURL string) *UsersResource {
+	return &UsersResource{store: store, analytics: analyticsURL}
 }
 
 // Routes creates a REST router for the todos resource
@@ -26,7 +31,7 @@ func (rs UsersResource) Routes() chi.Router {
 	r.Post("/", rs.Create) // POST /users - create a new user and persist it
 
 	r.Route("/{id}", func(r chi.Router) {
-		r.Use(rs.userCtx())      // lets have a users map, and lets actually load/manipulate
+		r.Use(rs.userCtx())      // let's have a users map, and let's actually load/manipulate
 		r.Get("/", rs.Get)       // GET /users/{id} - read a single user by :id
 		r.Delete("/", rs.Delete) // DELETE /users/{id} - delete a single user by :id
 	})
@@ -68,6 +73,19 @@ func (rs UsersResource) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := rs.store.Add(r.Context(), u.Name, u.Email)
+
+	ctx, span := otel.Tracer("user.resource").Start(r.Context(), "provide.analytics", trace.WithSpanKind(trace.SpanKindClient))
+	payload, _ := json.Marshal(&u)
+	analyticsReq, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://analytics:8082/", bytes.NewBuffer(payload))
+	defer span.End()
+	if err != nil {
+		span.RecordError(err)
+	}
+	_, err = opentelemetry.HTTPClientTransporter(http.DefaultTransport).RoundTrip(analyticsReq)
+	if err != nil {
+		span.RecordError(err)
+	}
+
 	render.JSON(w, r, &id)
 }
 

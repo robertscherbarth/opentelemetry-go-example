@@ -126,7 +126,7 @@ func generateRndInt() int {
 	return rand.Intn(max-min) + min
 }
 
-// HTTPClientTransporter is a convenience function which helps attaching tracing
+// HTTPClientTransporter is a convenience function which helps to attach tracing
 // functionality to conventional HTTP clients.
 func HTTPClientTransporter(rt http.RoundTripper) http.RoundTripper {
 	return otelhttp.NewTransport(rt)

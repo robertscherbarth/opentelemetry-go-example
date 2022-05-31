@@ -1,0 +1,14 @@
+"filename", "language", "Go", "Markdown", "Makefile", "YAML", "Go Checksum File", "Go Module File", "XML", "comment", "blank", "total"
+"/Users/robertscherbarth/private/opentelemetry-go-example/Makefile", "Makefile", 0, 0, 23, 0, 0, 0, 0, 0, 8, 31
+"/Users/robertscherbarth/private/opentelemetry-go-example/README.md", "Markdown", 0, 27, 0, 0, 0, 0, 0, 0, 15, 42
+"/Users/robertscherbarth/private/opentelemetry-go-example/cmd/consumer/main.go", "Go", 218, 0, 0, 0, 0, 0, 0, 10, 39, 267
+"/Users/robertscherbarth/private/opentelemetry-go-example/cmd/user/main.go", "Go", 49, 0, 0, 0, 0, 0, 0, 1, 13, 63
+"/Users/robertscherbarth/private/opentelemetry-go-example/docker-compose.yaml", "YAML", 0, 0, 0, 36, 0, 0, 0, 0, 1, 37
+"/Users/robertscherbarth/private/opentelemetry-go-example/docs/pics/otel-reference-architecture.svg", "XML", 0, 0, 0, 0, 0, 0, 177, 0, 1, 178
+"/Users/robertscherbarth/private/opentelemetry-go-example/go.mod", "Go Module File", 0, 0, 0, 0, 0, 35, 0, 0, 4, 39
+"/Users/robertscherbarth/private/opentelemetry-go-example/go.sum", "Go Checksum File", 0, 0, 0, 0, 131, 0, 0, 0, 1, 132
+"/Users/robertscherbarth/private/opentelemetry-go-example/pkg/opentelemetry/provider.go", "Go", 51, 0, 0, 0, 0, 0, 0, 14, 8, 73
+"/Users/robertscherbarth/private/opentelemetry-go-example/pkg/user/model.go", "Go", 7, 0, 0, 0, 0, 0, 0, 0, 3, 10
+"/Users/robertscherbarth/private/opentelemetry-go-example/pkg/user/resource.go", "Go", 78, 0, 0, 0, 0, 0, 0, 1, 15, 94
+"/Users/robertscherbarth/private/opentelemetry-go-example/pkg/user/store.go", "Go", 65, 0, 0, 0, 0, 0, 0, 0, 23, 88
+"Total", "-", 468, 27, 23, 36, 131, 35, 177, 26, 131, 1054

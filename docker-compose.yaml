@@ -4,6 +4,8 @@ services:
   jaeger:
     image: jaegertracing/all-in-one
     container_name: jaeger
+    environment:
+      - "QUERY_MAX_CLOCK_SKEW_ADJUSTMENT=60s"
     ports:
       - "14268:14268"   # jaeger-collector HTTP server (tracer provider)
       - "16686:16686"   # HTTP server (browser UI)
@@ -15,11 +17,25 @@ services:
     links:
       - jaeger
     environment:
+      - "ANALYTICS_URL:http://analytics:8082/"
       - "OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces"
     depends_on:
       - jaeger
     ports:
       - "8081:8081"
+  analytics:
+    container_name: analytics
+    build:
+      context: "."
+      dockerfile: Dockerfile.analytics
+    links:
+      - jaeger
+    environment:
+      - "OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces"
+    depends_on:
+      - jaeger
+    ports:
+      - "8082:8082"
   consumer:
     container_name: consumer
     build:

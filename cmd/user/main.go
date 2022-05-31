@@ -5,6 +5,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -26,8 +27,14 @@ func main() {
 		}
 	}()
 
+	analyticsURL, ok := os.LookupEnv("ANALYTICS_URL")
+	if !ok {
+		analyticsURL = "http://localhost:8082/"
+	}
+	log.Printf("analytics is %s \n", analyticsURL)
+
 	store := initUserStore()
-	userResource := user.NewUserResource(store)
+	userResource := user.NewUserResource(store, analyticsURL)
 
 	router := chi.NewRouter()
 	router.Use(otelchi.Middleware("", otelchi.WithChiRoutes(router)))
