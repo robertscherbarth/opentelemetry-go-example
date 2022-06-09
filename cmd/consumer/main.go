@@ -41,10 +41,6 @@ func main() {
 
 	ctx := context.Background()
 
-	//init client with otel wrapper
-	//client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
-	// init tracer object
-
 	// Wrap zap logger to extend Zap with API that accepts a context.Context.
 	log := otelzap.New(zap.NewExample(), otelzap.WithStackTrace(true))
 

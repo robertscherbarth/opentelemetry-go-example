@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.opentelemetry.io/otel/baggage"
 	"log"
 	"math/rand"
 	"net/http"
@@ -44,6 +45,10 @@ func main() {
 
 // analyzeUserHandler add additional information to trace object
 func analyzeUserHandler(w http.ResponseWriter, r *http.Request) {
+	bag := baggage.FromContext(r.Context())
+	m := bag.Member("user-id-baggage")
+	log.Printf("request user id from baggage: %s\n", m.String())
+
 	_, span := otel.Tracer("analytics").Start(r.Context(), "analytics.user", trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
 

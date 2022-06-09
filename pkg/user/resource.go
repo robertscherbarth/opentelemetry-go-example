@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/robertscherbarth/opentelemetry-go-example/pkg/opentelemetry"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/trace"
 	"net/http"
 
@@ -74,7 +75,13 @@ func (rs UsersResource) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	id := rs.store.Add(r.Context(), u.Name, u.Email)
 
-	ctx, span := otel.Tracer("user.resource").Start(r.Context(), "provide.analytics", trace.WithSpanKind(trace.SpanKindClient))
+	//baggage prep
+	member, _ := baggage.NewMember("user-id-baggage", id.String())
+	b, _ := baggage.New(member)
+	context := baggage.ContextWithBaggage(r.Context(), b)
+
+	ctx, span := otel.Tracer("user.resource").Start(context, "analytics.create.user", trace.WithSpanKind(trace.SpanKindClient))
+
 	payload, _ := json.Marshal(&u)
 	analyticsReq, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://analytics:8082/", bytes.NewBuffer(payload))
 	defer span.End()

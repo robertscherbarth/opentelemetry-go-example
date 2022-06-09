@@ -27,10 +27,11 @@ A very simplified example.
 ### Overview
 
 
-| Service         |                                                                                |
-|-----------------|--------------------------------------------------------------------------------|
-| consumer        | Interact with the user management service. It is doing random domain events.   |
-| user-management | This service manage the state of user data                                     |
+| Service         |                                                                              |
+|-----------------|------------------------------------------------------------------------------|
+| consumer        | Interact with the user management service. It is doing random domain events. |
+| user-management | This service manage the state of user data                                   |
+| analytics       | Service that gets data from a user.create event and enrich span              |
 
 ### Domain events
 
@@ -40,8 +41,8 @@ A very simplified example.
 | user.create | Creates a user |
 | user.delete | Delete a user  |
 
-Events are not single requests. We should consider that an event have more impact. For example the user create maybe 
-is interesting for an analytics team. Or the delete event will have an impact on GDPR.
+Events are not single requests. It should be considered that an event have more impact. For example a `user.create` event 
+maybe is interesting for an analytics team. Or the `user.delete` event will have an impact on GDPR.
 
 ### Further info:
 http://www.inanzzz.com/index.php/post/4qes/implementing-opentelemetry-and-jaeger-tracing-in-golang-http-api
