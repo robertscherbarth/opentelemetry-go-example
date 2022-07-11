@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  user-management:
+    container_name: user-management
+    build:
+      context: ""
+      dockerfile: ./Dockerfile.user
+    environment:
+      - "OTEL_EXPORTER_OTLP_ENDPOINT=grpc://api.honeycomb.io:443"
+      - "OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY}"
+      - "OTEL_SERVICE_NAME=user-management"
+    ports:
+      - "8081:8081"
+  analytics:
+    container_name: analytics
+    build:
+      context: ""
+      dockerfile: ./Dockerfile.analytics
+    environment:
+      - "OTEL_EXPORTER_OTLP_ENDPOINT=grpc://api.honeycomb.io:443"
+      - "OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY}"
+      - "OTEL_SERVICE_NAME=analytics"
+    depends_on:
+      - user-management
+    ports:
+      - "8082:8082"
+  consumer:
+    container_name: consumer
+    build:
+      context: ""
+      dockerfile: ./Dockerfile.consumer
+    environment:
+      - "URL=http://user-management:8081/users"
+      - "OTEL_EXPORTER_OTLP_ENDPOINT=grpc://api.honeycomb.io:443"
+      - "OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY}"
+      - "OTEL_SERVICE_NAME=consumer"
+    depends_on:
+      - user-management
+    ports:
+      - "8080:8080"

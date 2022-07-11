@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.opentelemetry.io/otel/baggage"
 	"log"
 	"math/rand"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 	"github.com/robertscherbarth/opentelemetry-go-example/pkg/user"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -24,14 +24,18 @@ import (
 const serviceName = "analytics"
 
 func main() {
+	ctx := context.Background()
 
 	//init exporter
-	tp := opentelemetry.InitJaegerTracerProvider(serviceName)
+	tp := opentelemetry.InitTraceProvider(ctx)
 	defer func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
 		}
 	}()
+
+	// Handle shutdown errors in a sensible manner where possible
+	defer func() { _ = tp.Shutdown(ctx) }()
 
 	router := chi.NewRouter()
 	router.Use(otelchi.Middleware("analytics-server", otelchi.WithChiRoutes(router)), middleware.Logger)

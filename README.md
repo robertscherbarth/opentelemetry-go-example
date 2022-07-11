@@ -44,5 +44,35 @@ A very simplified example.
 Events are not single requests. It should be considered that an event have more impact. For example a `user.create` event 
 maybe is interesting for an analytics team. Or the `user.delete` event will have an impact on GDPR.
 
+## Setup
+
+### Jaeger Setup
+
+This setup runs out of the box. It includes a local jaeger that is used to visualize the traces. 
+
+#### Run the setup
+
+```
+make jaeger-build && make jaeger-up  
+```
+
+### Honeycomb Setup
+
+This docker-compose setup will export the data to https://www.honeycomb.io/.
+
+To enable this you need to add a `.env-honeycomb` file in this folder this need an environment definition with this env key `HONEYCOMB_API_KEY`
+
+example:
+```
+HONEYCOMB_API_KEY=1234567890
+```
+
+#### Run the setup
+
+```
+make honeycomb-build && make honeycomb-up
+```
+
+
 ### Further info:
 http://www.inanzzz.com/index.php/post/4qes/implementing-opentelemetry-and-jaeger-tracing-in-golang-http-api

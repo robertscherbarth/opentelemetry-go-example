@@ -18,14 +18,18 @@ import (
 const serviceName = "user-management"
 
 func main() {
+	ctx := context.Background()
 
 	//init exporter
-	tp := opentelemetry.InitJaegerTracerProvider(serviceName)
+	tp := opentelemetry.InitTraceProvider(ctx)
 	defer func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
 		}
 	}()
+
+	// Handle shutdown errors in a sensible manner where possible
+	defer func() { _ = tp.Shutdown(ctx) }()
 
 	analyticsURL, ok := os.LookupEnv("ANALYTICS_URL")
 	if !ok {

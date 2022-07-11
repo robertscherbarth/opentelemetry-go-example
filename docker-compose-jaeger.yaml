@@ -12,13 +12,14 @@ services:
   user-management:
     container_name: user-management
     build:
-      context: "."
-      dockerfile: Dockerfile.user
+      context: ""
+      dockerfile: ./Dockerfile.user
     links:
       - jaeger
     environment:
       - "ANALYTICS_URL:http://analytics:8082/"
       - "OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces"
+      - "OTEL_SERVICE_NAME=user-management"
     depends_on:
       - jaeger
     ports:
@@ -26,12 +27,13 @@ services:
   analytics:
     container_name: analytics
     build:
-      context: "."
-      dockerfile: Dockerfile.analytics
+      context: ""
+      dockerfile: ./Dockerfile.analytics
     links:
       - jaeger
     environment:
       - "OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces"
+      - "OTEL_SERVICE_NAME=analytics"
     depends_on:
       - jaeger
     ports:
@@ -39,13 +41,14 @@ services:
   consumer:
     container_name: consumer
     build:
-      context: "."
-      dockerfile: Dockerfile.consumer
+      context: ""
+      dockerfile: ./Dockerfile.consumer
     links:
       - jaeger
     environment:
       - "OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces"
       - "URL=http://user-management:8081/users"
+      - "OTEL_SERVICE_NAME=consumer"
     depends_on:
       - jaeger
       - user-management

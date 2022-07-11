@@ -1,14 +1,14 @@
-run-crud: ## start the crud service
-	go run ./cmd/crud/.
+honeycomb-build: ## honeycomb build setup
+	docker compose --env-file .env-honeycomb -f docker-compose-honeycomb.yaml build
 
-run-caller: ## start the caller
-	go run ./cmd/caller/.
+honeycomb-up: ## honeycomb run setup
+	docker compose --env-file .env-honeycomb -f docker-compose-honeycomb.yaml up
 
-users-get-all: ## curl all users from the crud service
-	curl -i -X GET http://localhost:8081/users
+jaeger-build: ## jaeger build setup
+	docker compose -f docker-compose-jaeger.yaml build
 
-user-delete: ## curl delete single user
-	curl -i -X DELETE http://localhost:8081/users/acabbaba-f65f-4a29-9091-19b3264dafff
+jaeger-up: ## jaeger run setup
+	docker compose -f docker-compose-jaeger.yaml up
 
 fmt: ## Run go fmt against code
 	go fmt ./pkg/... ./cmd/...

@@ -28,18 +28,20 @@ import (
 const serviceName = "consumer"
 
 func main() {
+	ctx := context.Background()
+
 	//precondition to set a random number
 	rand.Seed(time.Now().UnixNano())
 
 	//init exporter
-	tp := opentelemetry.InitJaegerTracerProvider(serviceName)
+	tp := opentelemetry.InitTraceProvider(ctx)
 	defer func() {
 		if err := tp.Shutdown(context.Background()); err != nil {
 			log.Printf("Error shutting down tracer provider: %v", err)
 		}
 	}()
 
-	ctx := context.Background()
+	defer func() { _ = tp.Shutdown(ctx) }()
 
 	// Wrap zap logger to extend Zap with API that accepts a context.Context.
 	log := otelzap.New(zap.NewExample(), otelzap.WithStackTrace(true))
