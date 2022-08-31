@@ -14,15 +14,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
-	"github.com/uptrace/opentelemetry-go-extra/otelzap"
+	"github.com/robertscherbarth/opentelemetry-go-example/pkg/opentelemetry"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
-
-	"github.com/robertscherbarth/opentelemetry-go-example/pkg/opentelemetry"
 )
 
 const serviceName = "consumer"
@@ -43,9 +40,6 @@ func main() {
 
 	defer func() { _ = tp.Shutdown(ctx) }()
 
-	// Wrap zap logger to extend Zap with API that accepts a context.Context.
-	log := otelzap.New(zap.NewExample(), otelzap.WithStackTrace(true))
-
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Get("/", func(writer http.ResponseWriter, request *http.Request) {
@@ -57,7 +51,7 @@ func main() {
 	urlENV, ok := os.LookupEnv("URL")
 	if ok {
 		addressURI = urlENV
-		log.Info("fund new url", zap.String("url", urlENV))
+		log.Printf("fund new url %s\n", urlENV)
 	}
 
 	//rnd get
@@ -70,10 +64,10 @@ func main() {
 
 				err := rndUserList(ctx, addressURI)
 				if err != nil {
-					log.Ctx(ctx).Error("oops something went wrong", zap.Error(err))
+					log.Printf("err: %s\n", err.Error())
 					break
 				}
-				log.InfoContext(ctx, "user get all")
+				log.Println("user get all")
 			}
 		}
 	}(ctx)
@@ -87,10 +81,10 @@ func main() {
 
 				err := rndUserCreate(ctx, addressURI)
 				if err != nil {
-					log.Ctx(ctx).Error("oops something went wrong", zap.Error(err))
+					log.Printf("err: %s\n", err.Error())
 					break
 				}
-				log.InfoContext(ctx, "user create")
+				log.Println("user create")
 			}
 		}
 	}(ctx)
@@ -104,17 +98,17 @@ func main() {
 
 				err := rndUserDelete(ctx, addressURI)
 				if err != nil {
-					log.Ctx(ctx).Error("oops something went wrong", zap.Error(err))
+					log.Printf("err: %s\n", err.Error())
 					break
 				}
-				log.InfoContext(ctx, "user delete")
+				log.Println("user delete")
 			}
 		}
 	}(ctx)
 
-	log.Info("started consumer application")
+	log.Println("started consumer application")
 	if err := http.ListenAndServe(":8080", router); err != nil {
-		log.Error("error while running server", zap.Error(err))
+		log.Printf("error while running server %s\n", err.Error())
 	}
 }
 
