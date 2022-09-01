@@ -15,8 +15,6 @@ import (
 	"github.com/robertscherbarth/opentelemetry-go-example/pkg/user"
 )
 
-const serviceName = "user-management"
-
 func main() {
 	ctx := context.Background()
 

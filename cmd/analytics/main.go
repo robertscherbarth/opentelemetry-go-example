@@ -21,8 +21,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const serviceName = "analytics"
-
 func main() {
 	ctx := context.Background()
 
