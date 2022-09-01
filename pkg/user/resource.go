@@ -54,7 +54,11 @@ func (rs UsersResource) userCtx() func(next http.Handler) http.Handler {
 				http.Error(w, http.StatusText(404), http.StatusNotFound)
 				return
 			}
-			ctx := context.WithValue(r.Context(), "user", user)
+
+			type userKey string
+			k := userKey("user")
+
+			ctx := context.WithValue(r.Context(), k, user)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
