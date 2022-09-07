@@ -54,53 +54,41 @@ func main() {
 
 	//rnd get
 	go func(context.Context) {
-		ticker := time.NewTicker(time.Duration(generateRndInt()) * time.Second)
 		for {
-			select {
-			case <-ticker.C:
-				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
-
-				err := rndUserList(ctx, addressURI)
-				if err != nil {
-					log.Printf("err: %s\n", err.Error())
-					break
-				}
-				log.Println("user get all")
+			err := rndUserList(ctx, addressURI)
+			if err != nil {
+				log.Printf("err: %s\n", err.Error())
+				break
 			}
+			log.Println("user get all")
+
+			time.Sleep(time.Duration(generateRndInt()) * time.Second)
 		}
 	}(ctx)
 
 	go func(context.Context) {
-		ticker := time.NewTicker(time.Duration(generateRndInt()) * time.Second)
 		for {
-			select {
-			case <-ticker.C:
-				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
-
-				err := rndUserCreate(ctx, addressURI)
-				if err != nil {
-					log.Printf("err: %s\n", err.Error())
-					break
-				}
-				log.Println("user create")
+			err := rndUserCreate(ctx, addressURI)
+			if err != nil {
+				log.Printf("err: %s\n", err.Error())
+				break
 			}
+			log.Println("user create")
+
+			time.Sleep(time.Duration(generateRndInt()) * time.Second)
 		}
 	}(ctx)
 
 	go func(context.Context) {
-		ticker := time.NewTicker(time.Duration(generateRndInt()) * time.Second)
 		for {
-			select {
-			case <-ticker.C:
-				ticker.Reset(time.Duration(generateRndInt()) * time.Second)
-
-				err := rndUserDelete(ctx, addressURI)
-				if err != nil {
-					log.Printf("err: %s\n", err.Error())
-					break
-				}
-				log.Println("user delete")
+			err := rndUserDelete(ctx, addressURI)
+			if err != nil {
+				log.Printf("err: %s\n", err.Error())
+				break
 			}
+			log.Println("user delete")
+
+			time.Sleep(time.Duration(generateRndInt()) * time.Second)
 		}
 	}(ctx)
 
