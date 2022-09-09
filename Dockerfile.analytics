@@ -1,22 +1,27 @@
 FROM golang:alpine as builder
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 # create build folder
 RUN mkdir /build
 
 # add build files to image and make to work dir
-ADD . /build
+COPY . /build
 WORKDIR /build
 
 # Generate a binary
-RUN CGO_ENABLED=0 go build -mod=mod -o main ./cmd/analytics/.
+RUN CGO_ENABLED=0 go build -mod=mod -o app ./cmd/analytics/.
 
 FROM scratch
 # the tls certificates:
 # this pulls directly from the upstream image, which already has ca-certificates:
-COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/passwd /etc/passwd
 
 # copy program
-COPY --from=builder /build/main /app/
+COPY --from=builder /build/app /app/
 WORKDIR /app
 
-CMD ["./main"]
+USER appuser
+
+CMD ["./app"]
