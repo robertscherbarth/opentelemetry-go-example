@@ -104,7 +104,7 @@ func (rs UsersResource) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user, ok := ctx.Value("user").(User)
 	if !ok {
-		http.Error(w, http.StatusText(422), http.StatusUnprocessableEntity)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	render.JSON(w, r, user)
@@ -114,7 +114,7 @@ func (rs UsersResource) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	user, ok := ctx.Value("user").(User)
 	if !ok {
-		http.Error(w, http.StatusText(422), http.StatusUnprocessableEntity)
+		http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
 		return
 	}
 	rs.store.Delete(r.Context(), user.UUID)
