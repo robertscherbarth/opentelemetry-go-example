@@ -1,0 +1,13 @@
+explanation: |md
+  # Services
+  - consumer - is a service that generates data and initiate traces
+  - user-management - is a service thats supports REST calls for User entity
+  - analytics - this service is to have second hope for trace information
+
+  # Flow
+| { near: top-center }
+
+Communication Flow {
+    consumer -> user-management : creates, update and delete user
+    user-management -> analytics : send user information with baggage-id attached
+}
